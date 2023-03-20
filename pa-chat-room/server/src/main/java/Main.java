@@ -3,7 +3,9 @@ import java.io.FileNotFoundException;
 import java.util.concurrent.BlockingQueue;
 import java.util.Scanner;
 import java.util.concurrent.*;
-
+/**
+ * The main class where it starts the code  and ist created the clients, arrays and the Write_file
+ */
 public class Main {
     public static void main ( String[] args ) {
         BlockingQueue<String> Buffer_unfilther = new LinkedBlockingQueue<>();

@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
-
+/**
+ * The main class where it starts the code  and ist created the clients, arrays and the Write_file
+ */
 public class Main {
 
     public static void main ( String[] args ) {
