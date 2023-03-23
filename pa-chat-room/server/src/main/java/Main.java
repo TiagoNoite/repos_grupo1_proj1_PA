@@ -13,7 +13,6 @@ public class Main {
 
         Semaphore Write_sem  = new Semaphore(1);
 
-
         filter filtro = new filter(Buffer_unfilther,Buffer_filtherd,Write_sem);
         ServerThread server = new ServerThread ( 8888,Buffer_unfilther, Buffer_filtherd, Write_sem);
 

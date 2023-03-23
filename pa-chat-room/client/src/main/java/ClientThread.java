@@ -17,12 +17,14 @@ public class ClientThread extends Thread {
     private final int port;
     private final int id;
     private final int freq;
+
     private DataOutputStream out;
     private BufferedReader in;
     private Socket socket;
     private Scanner myObj = new Scanner(System.in);
     ArrayList<String> Buffer;
     Semaphore Write_sem;
+
 
     /**
      * The ClientThread constructor, it specifies the id, port and frequencies to speak to the server and gives the buffer and the semaphore
@@ -33,12 +35,13 @@ public class ClientThread extends Thread {
      * @param Buffer    this buffer is shared to another class and the client creates a slave to write in this buffer
      * @param Write_sem this semaphore is passed to the slave created by th client and is used to not allow to many people using the buffer
      */
-    public ClientThread ( int port , int id , int freq, ArrayList<String> Buffer, Semaphore Write_sem ) {
+    public ClientThread ( int port , int id , int freq, ArrayList<String> Buffer, Semaphore Write_sem){
         this.port = port;
         this.id = id;
         this.freq = freq;
         this.Buffer = Buffer;
         this.Write_sem =Write_sem;
+
     }
 
     /**
@@ -46,11 +49,9 @@ public class ClientThread extends Thread {
      * function, and it does not take any parameters
      */
     public void run () {
-        producer_Thread();
-        /*
-         https://www.geeksforgeeks.org/producer-consumer-solution-using-threads-java/
-        */
-
+        while (true) {
+            producer_Thread();
+        }
     }
 
     /**
@@ -60,36 +61,34 @@ public class ClientThread extends Thread {
      *
      */
     public void producer_Thread(){
-        int i = 0;
-        while ( true ) {
-            try {
-                // if(sem.tryAcquire(1, TimeUnit.SECONDS)) {
-                socket = new Socket ( "localhost" , port );
-                out = new DataOutputStream ( socket.getOutputStream ( ) );
-                in = new BufferedReader ( new InputStreamReader ( socket.getInputStream ( ) ) );
 
-                System.out.println("write your message: ");
-                String message = myObj.nextLine();  // Read user input
+        System.out.println("id do cliente para falar:"+id);
 
-                out.writeUTF("Message is: " + message + " from cliente"+ id);
+        try {
+            socket = new Socket("localhost", port);
+            out = new DataOutputStream(socket.getOutputStream());
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                Slave_buffer add_buff= new Slave_buffer(Buffer, message, Write_sem);
-                add_buff.start();
+            System.out.println("write your message: ");
+            //String message = myObj.nextLine();  // Read user input
+            String message ="ola";
+            out.writeUTF("Message is: " + message + " from cliente" + id);
 
-                String response;
-                response = in.readLine ( );
-                System.out.println ( "From Server: " + response );
-                out.flush ();
-                socket.close ( );
-                sleep ( freq );
-                i++;
+            Slave_buffer add_buff = new Slave_buffer(Buffer, message, Write_sem);
+            add_buff.start();
 
-                add_buff.join();
+            String response;
+            response = in.readLine();
+            System.out.println("From Server: " + response);
+            out.flush();
+            socket.close();
+            sleep(freq);
 
-            } catch ( IOException | InterruptedException e ) {
-                e.printStackTrace ( );
-            }
+            add_buff.join();
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
-    }
 
+    }
 }

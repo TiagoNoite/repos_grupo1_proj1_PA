@@ -5,7 +5,7 @@ import java.util.concurrent.Semaphore;
  * The filter class is used as the name sugest filther the inapropriet word that are sent to the server and then send them back to the server
  */
 public class filter extends Thread{
-    private BlockingQueue<String>  filtro;
+     private BlockingQueue<String>  filtro;
     BlockingQueue<String>  Buffer_unfilther;
     BlockingQueue<String>  Buffer_filther ;
     Semaphore Write_sem;
@@ -68,7 +68,8 @@ public class filter extends Thread{
     public void run() {
 
         while(true) {
-            Read_Files readFiles = new Read_Files("C:\\Users\\pc\\IdeaProjects\\repos_grupo1_proj1_PA\\pa-chat-room\\filter.txt");
+
+            Read_Files readFiles = new Read_Files("C:\\Users\\pc\\IdeaProjects\\pa-chat-room\\filter.txt");
             readFiles.start();
             filtro = readFiles.read_file();
 

@@ -12,6 +12,7 @@ public class Read_Files extends Thread {
     /**
      * The Read_Files constructor, this takes one parameter to know where is the information to be collected
      *@param filename    the filename is the place where the information is
+     *
      */
     public Read_Files(String filename ){
         this.filename=filename;
@@ -43,12 +44,5 @@ public class Read_Files extends Thread {
      * the run method is where is called the read_file to read the files
      *
      */
-    @Override
-    public void run() {
-        while(true) {
 
-            read_file();
-
-        }
-    }
 }
