@@ -1,76 +1,137 @@
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.File;  // Import the File class
-import java.io.FileNotFoundException;  // Import this class to handle errors
-import java.util.concurrent.BlockingQueue;
-import java.util.Scanner;
-import java.util.concurrent.Semaphore;
-/**
- * The ServerThread class represents server that receives messages from the client and sends a response to them
- */
+import java.net.SocketException;
+import java.util.concurrent.*;
+import java.util.logging.Logger;
+
 public class ServerThread extends Thread {
+
+    /* REFERENCES:
+    *  https://stackoverflow.com/questions/55985469/limit-number-of-clients-that-will-connect-through-the-server
+    * */
     private final int port;
-    private DataInputStream in;
-    private PrintWriter out;
-    private ServerSocket server;
-    private Socket socket;
-    BlockingQueue<String>  Buffer_unfilther;
-    BlockingQueue<String>  Buffer_filther ;
+    private final int limitClients;
+    private ServerSocket serverSocket;
+    BlockingQueue<String> bufferUnfiltered;
+    BlockingQueue<String> bufferFiltered;
     Semaphore Write_sem;
-    /**
-     * The ServerThread constructor, this one specefies the port in where it will begin and has buffers to put and receive the messages from the
-     * clients and the ones that are filtherd
-     * @param port              the port where the messages are receive and sent
-     * @param Buffer_unfilther  This buffer is where the messages that are not filthed are added to be processed
-     * @param Buffer_filther    This buffer is where the messages that are filthed are added to be sent to the server and showed
-     * @param Write_sem         This semaphore was used before to create a slave to add the messages to the buffer
-     */
-    public ServerThread ( int port,  BlockingQueue<String>  Buffer_unfilther, BlockingQueue<String>  Buffer_filther,Semaphore Write_sem ) {
+    ThreadPoolExecutor executor;
+    MyLogger logger;
+
+    public ServerThread ( int port,  BlockingQueue<String>  bufferUnfilter, BlockingQueue<String>  bufferFilter,Semaphore Write_sem,Integer limitClients) {
         this.port = port;
-        this.Buffer_unfilther = Buffer_unfilther;
-        this.Buffer_filther = Buffer_filther;
+        this.bufferUnfiltered = bufferUnfilter;
+        this.bufferFiltered = bufferFilter;
         this.Write_sem=Write_sem;
+        this.limitClients = limitClients;
+
+        //this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(limitClients);
+        this.executor = new ThreadPoolExecutor(this.limitClients, this.limitClients,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>());
         try {
-            server = new ServerSocket ( this.port );
+            this.logger = new MyLogger();
+            serverSocket = new ServerSocket ( this.port );
         } catch ( IOException e ) {
             e.printStackTrace ( );
         }
     }
-    /**
-     * the run method is the core of the server, it's where the server listens and responds to the clients, here is added to the buffer
-     * not filtered the messages received from teh clients
-     */
-    public void run ( ) {
 
-        while ( true ) {
+
+    public void run ( ){
+
+        for(Integer clientId=1;true;clientId++)
             try {
 
-                System.out.println ( "Accepting Data" );
-                socket = server.accept ( );
-                in = new DataInputStream ( socket.getInputStream ( ) );
-                out = new PrintWriter ( socket.getOutputStream ( ) , true );
+                System.out.println("Accepting Data and creating clientSocket");
+                Socket clientSocket = this.serverSocket.accept();
 
-                //WaitBuffer responde_mensages = new WaitBuffer(Buffer_filther, out, Write_sem);
-                //responde_mensages.start();
+                //logger.logNewMessage(LogType.CONNECTION,clientId,null);
+                System.out.println("Submitting a new clientHandler to the task Queue");
 
-                String message = in.readUTF( );
-                Buffer_unfilther.add(message);
+                BlockingQueue queue = executor.getQueue();
+                if(executor.getActiveCount() >= this.limitClients){
+                    logger.logNewMessage(LogType.WAITING, clientId, null);
+                }
 
-                String replaced= Buffer_filther.take();
-
-                out.println(replaced);
-                System.out.println(replaced);
-
-                //responde_mensages.join();
-
+                executor.submit(new ClientHandler(bufferUnfiltered,bufferFiltered,clientSocket,clientId));
             } catch ( IOException e ) {
                 e.printStackTrace();
-            } catch (InterruptedException e) {
+            }
+        }
+    }
+
+
+//http://www.cs.sjsu.edu/~pearce/modules/lectures/oop/templates/threads/index.htm
+
+
+class ClientHandler implements Runnable {
+    private BlockingQueue<String> buffer_unfilther;
+    private BlockingQueue<String> buffer_filther;
+    private Socket clientSocket;
+    private MyLogger logger;
+    private Integer clientId;
+
+    public ClientHandler(BlockingQueue<String> buffer_unfilther,BlockingQueue<String> buffer_filther,Socket clientSocket,Integer clientId){
+        this.buffer_unfilther = buffer_unfilther;
+        this.buffer_filther = buffer_filther;
+        this.clientSocket = clientSocket;
+        this.clientId = clientId;
+        try {
+            this.logger = new MyLogger();
+        }
+        catch (IOException e)
+        {
+            System.out.println("Couldn't create logger in ClientHandler");
+        }
+    }
+
+    public void run(){
+        try {
+            logger.logNewMessage(LogType.CONNECTION,clientId,null);
+            DataInputStream in = new DataInputStream(this.clientSocket.getInputStream());
+            PrintWriter out = new PrintWriter(this.clientSocket.getOutputStream(), true);
+
+            while(true) {
+                //Check if client is still connected.
+                // If not, terminate this task to free the thread, so it can answer someone else.
+                if (!this.clientSocket.isConnected()) {
+                    logger.logNewMessage(LogType.DISCONNECTION,this.clientId,null);
+                    this.clientSocket.close();
+                    break;
+                }
+
+                //Read message from client
+                String received_message = in.readUTF();
+
+                //Add message to unfiltered buffer
+                buffer_unfilther.add(received_message);
+                //Log that we received a message.
+                logger.logNewMessage(LogType.MESSAGE,clientId,received_message);
+
+                //Get the censored message.
+                String replaced = buffer_filther.take();
+
+                //Write the censored message back to the client.
+                out.println(replaced);
+                out.flush();
+                //Print the censored message to stdout.
+                System.out.println(replaced);
+            }
+        }
+        catch (SocketException se){
+            try {
+                this.clientSocket.close();
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            logger.logNewMessage(LogType.DISCONNECTION,clientId, null);
+        }
+        // Falta ver se o tipo de Exception é java.net.SocketException: Connection reset. Se for , acabar este client.
+        // Assim , já não é preciso do isConnected() no inicio do loop.
+        catch (Exception e){
+            System.out.println(e);
         }
     }
 }
