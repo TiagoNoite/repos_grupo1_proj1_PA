@@ -11,10 +11,9 @@ class Write_fileTest {
 
         private ArrayList<String> Buffer = new ArrayList<String>();
         private ArrayList<String> Buffer2 = new ArrayList<String>();
-        Semaphore endProcess = new Semaphore(1);
-        Semaphore endProcess2 = new Semaphore(1);
-        private Write_file write = new Write_file(Buffer,endProcess ) ;
-        private Write_file write2 = new Write_file( Buffer2, endProcess2) ;
+        private Semaphore End_process  = new Semaphore(1);
+        private Write_file write = new Write_file(Buffer, End_process) ;
+        private Write_file write2 = new Write_file( Buffer2,End_process ) ;
 
 
         @BeforeEach
