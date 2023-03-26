@@ -1,3 +1,0 @@
-porta: 8888 ;
-max_client: 3;
-filepath: ;
