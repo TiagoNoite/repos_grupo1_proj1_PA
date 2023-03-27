@@ -1,4 +1,4 @@
-import jdk.jfr.Category;
+
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
