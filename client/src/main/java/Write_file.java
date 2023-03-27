@@ -24,7 +24,9 @@ public class Write_file  extends Thread {
 
     @Override
     public void run() {
-        consumer_Thread();
+        while(endProcess.availablePermits() != 0) {
+            consumer_Thread();
+        }
     }
 
     /**
@@ -32,23 +34,23 @@ public class Write_file  extends Thread {
      */
     public void consumer_Thread()  {
         String In_between = "";
-        try {
-            while(endProcess.availablePermits() != 0) {
-                if (Buffer.size() != 0) {
-                    for (int i = 0; i < Buffer.size(); i++) {
-                        In_between = In_between + Buffer.get(i) ;
-                        Buffer.remove(i);
-                    }
-                    Write_in_file(In_between);
-                    In_between="";
-                }else {
-                   sleep(200);
-                }
+
+        if (Buffer.size() != 0) {
+            for (int i = 0; i < Buffer.size(); i++) {
+                In_between = In_between + Buffer.get(i) ;
+                Buffer.remove(i);
+            }
+            Write_in_file(In_between);
+            In_between="";
+        }else {
+            try {
+                sleep(200);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
-        catch (InterruptedException e){
-            throw new RuntimeException(e);
-        }
+
+
     }
 
 
@@ -78,3 +80,4 @@ public class Write_file  extends Thread {
         }
     }
 }
+
