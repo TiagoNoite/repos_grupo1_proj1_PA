@@ -24,7 +24,7 @@ public class filter extends Thread{
         this.Buffer_filther=Buffer_filtherd;
         this.Write_sem= Write_sem;
 
-        Read_Files readFiles = new Read_Files("./filter.txt");
+        Read_Files readFiles = new Read_Files("C:\\Users\\pc\\Desktop\\universidade\\3_ano\\PA\\praticas\\repos_grupo1_proj1_PA-Final\\filter.txt");
         readFiles.start();
         filtro = readFiles.read_file();
     }
