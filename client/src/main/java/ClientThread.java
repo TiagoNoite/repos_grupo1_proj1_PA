@@ -5,7 +5,9 @@ import java.util.concurrent.Semaphore;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-
+/**
+ * <p>Class ClientThread handle every client's interaction with the server</p>
+ */
 public class ClientThread extends Thread {
     private final int port;
     private DataOutputStream out;
@@ -17,7 +19,14 @@ public class ClientThread extends Thread {
     private ClientState state;
     private Semaphore endProcess;
 
-
+    /**
+     * <p>ClientThread's Constructor</p>
+     *
+     * @param port Port where the server can connect
+     * @param Buffer List of messages that have already passed from the filter
+     * @param Write_sem control
+     * @param endProcess path where the server can access to the data
+     */
     public ClientThread ( int port, ArrayList<String> Buffer, Semaphore Write_sem, Semaphore endProcess ) {
         this.port = port;
         this.Buffer = Buffer;
@@ -28,7 +37,7 @@ public class ClientThread extends Thread {
         try {
             this.socket = new Socket("localhost", port);
             this.out = new DataOutputStream ( socket.getOutputStream ( ) );
-            this.in = new BufferedReader ( new InputStreamReader ( socket.getInputStream ( ) ) );
+            this.in = new BufferedReader ( new InputStreamReader ( socket.getInputStream()));
         }
         catch (Exception e){
             System.out.println(e);
@@ -36,7 +45,7 @@ public class ClientThread extends Thread {
     }
 
     /**
-     * Gets actual client's state
+     * <p>Gets actual client's state</p>
      *
      * @return the actual state of the client
      */
@@ -45,21 +54,21 @@ public class ClientThread extends Thread {
     }
 
     /**
-     * Change the actual state of the client to OK, Which activated the client
+     * <p>Change the actual state of the client to OK, Which activated the client</p>
      */
     public void activateState() {
         this.state = ClientState.OK;
     }
 
     /**
-     * Change the actual state of the client to end, Which indicated that the client has been disconnected
+     * <p>Change the actual state of the client to end, Which indicated that the client has been disconnected</p>
      */
     public void endState(){
         this.state = ClientState.END;
     }
 
     /**
-     * Gets the actual maximum number of client that the server allow
+     * <p>Gets the actual maximum number of client that the server allow</p>
      *
      * @throws IOException Signals that an I/O exception of some sort has occurred
      */
@@ -70,9 +79,8 @@ public class ClientThread extends Thread {
         System.out.println(str);
     }
 
-
     /**
-     * Finish the client's process
+     * <p>Finish the client's process</p>
      *
      * @throws IOException Signals that an I/O exception of some sort has occurred
      * @throws InterruptedException Thrown when a thread is waiting, sleeping, or otherwise occupied, and the thread is interrupted, either before or during the activity.
@@ -88,7 +96,7 @@ public class ClientThread extends Thread {
     }
 
     /**
-     * Change the maximum number of clients that the server allow
+     * <p>Change the maximum number of clients that the server allow</p>
      *
      * @throws IOException Signals that an I/O exception of some sort has occurred
      */
@@ -105,7 +113,7 @@ public class ClientThread extends Thread {
     }
 
     /**
-     * Allow the client to write messages on the server
+     * <p>Allow the client to write messages on the server</p>
      *
      * @throws IOException Signals that an I/O exception of some sort has occurred
      * @throws InterruptedException Thrown when a thread is waiting, sleeping, or otherwise occupied, and the thread is interrupted, either before or during the activity.
@@ -130,35 +138,45 @@ public class ClientThread extends Thread {
     }
 
     /**
-     * Allow the client to write new word on the filter file
+     * <p>Allow the client to write new word on the filter file</p>
      *
      * @throws IOException Signals that an I/O exception of some sort has occurred
      */
-    public void addToFilther () throws IOException{
+    public void addToFilter () throws IOException{
 
-        System.out.print("Write the word you want to add to the filter ");
-
+        out.writeUTF("add");
+        System.out.print("Write the word you want to add to the filter: ");
         String word = myObj.nextLine();
-
-        try {
-            FileWriter fileWriter = new FileWriter("C:\\Users\\pc\\Desktop\\universidade\\3_ano\\PA\\praticas\\pa-chat-room_3\\pa-chat-room\\filter.txt", true);
-            BufferedWriter writer = new BufferedWriter(fileWriter);
-
-            writer.write(word);
-            writer.newLine();
-
-            writer.close();
-            fileWriter.close();
-
-        } catch (IOException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
+        out.writeUTF(word);
 
     }
 
     /**
-     * Allow the client to choose the desire choose
+     * <p>Remove client's word from the filter</p>
+     * @throws IOException Signals that an I/O exception of some sort has occurred
+     */
+    public void removeFromFilter () throws IOException{
+        out.writeUTF("remove");
+        System.out.print("Write the word you want to remove from the filter: ");
+        String word = myObj.nextLine();
+        out.writeUTF(word);
+    }
+
+    /**
+     * <p>Show words at currently in the filter</p>
+     *  @throws IOException Signals that an I/O exception of some sort has occurred
+     */
+    public void showWords() throws IOException {
+        out.writeUTF("show");
+        String line;
+        System.out.println("The current words are: ");
+        while ((line = in.readLine()) != null && !line.equals("FINISHED READING A FILE")) {
+            System.out.println(line);
+        }
+    }
+
+    /**
+     * <p>Allow the client to choose the desire choose</p>
      *
      * @throws IOException Signals that an I/O exception of some sort has occurred
      * @throws InterruptedException Thrown when a thread is waiting, sleeping, or otherwise occupied, and the thread is interrupted, either before or during the activity.
@@ -178,13 +196,18 @@ public class ClientThread extends Thread {
                         getMaxNumberClients();
                         break;
                     case 3:
-                        addToFilther();
+                        addToFilter();
+                        break;
                     case 4:
+                        removeFromFilter();
                         break;
                     case 5:
-                        writeMessage();
+                        showWords();
                         break;
                     case 6:
+                        writeMessage();
+                        break;
+                    case 7:
                         exit();
                         System.out.println(" ----------- Disconnecting Client ----------- ");
                         option = 0;
@@ -196,11 +219,10 @@ public class ClientThread extends Thread {
                 continue;
             }
         }while (option != 0);
-
     }
 
     /**
-     * Show the option that the client can choose
+     * <p>Show the option that the client can choose</p>
      */
     public void showMenu(){
         System.out.println("\n ****************** Client's Menu ****************** \n");
@@ -208,9 +230,9 @@ public class ClientThread extends Thread {
         System.out.println("2. Show current Max clients. ");
         System.out.println("3. Add words to filter. ");
         System.out.println("4. Remove words from filter. ");
-        System.out.println("5. Write a message.");
-        System.out.println("6. Disconnect from server. ");
-        System.out.println("0. Exit. \n");
+        System.out.println("5. Show the words that are on filter.txt. ");
+        System.out.println("6. Write a message.");
+        System.out.println("7. Disconnect from server. \n");
 
         System.out.print("  Select an option: ");
 

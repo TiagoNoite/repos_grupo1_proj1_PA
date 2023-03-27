@@ -1,7 +1,4 @@
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.concurrent.BlockingQueue;
-import java.util.Scanner;
 import java.util.concurrent.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;

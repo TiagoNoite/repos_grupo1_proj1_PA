@@ -1,14 +1,18 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * <p>Class ServerThread handle every server's interaction with the clients</p>
+ *
+ */
 public class ServerThread extends Thread {
 
     /* REFERENCES:
@@ -22,13 +26,24 @@ public class ServerThread extends Thread {
     MyLogger logger;
     private LinkedHashMap<Integer, Socket> waitingList = new LinkedHashMap<>();
     private Semaphore semaphore;
-    private Lock controlClients;
     private int maxClients;
+    private int currentClients;
     private Lock changeMaxClienstlock;
     private Lock nextClientLock;
-    private int currentClients;
+    private Lock controlClients;
+    private Lock controlFileAccess;
 
-    public ServerThread ( int port,  BlockingQueue<String>  bufferUnfilter, BlockingQueue<String>  bufferFilter,Semaphore Write_sem, String filename ) {
+    /**
+     * <p>Class ServerThread's Constructor</p>
+     *
+     * @param port Port where the server can connect
+     * @param bufferFilter List of messages that have already passed from the filter
+     * @param bufferUnfilter List of messages that haven't passed from the filter
+     * @param Write_sem control
+     * @param filename path where the server can access to the data
+     *
+     */
+    public ServerThread(int port, BlockingQueue<String> bufferUnfilter, BlockingQueue<String> bufferFilter, Semaphore Write_sem, String filename) {
         this.port = port;
         this.bufferUnfiltered = bufferUnfilter;
         this.bufferFiltered = bufferFilter;
@@ -38,18 +53,19 @@ public class ServerThread extends Thread {
         this.changeMaxClienstlock = new ReentrantLock();
         this.nextClientLock = new ReentrantLock();
         this.controlClients = new ReentrantLock();
+        this.controlFileAccess = new ReentrantLock();
         this.currentClients = 0;
 
         try {
             this.logger = new MyLogger();
-            serverSocket = new ServerSocket ( this.port );
-        } catch ( IOException e ) {
-            e.printStackTrace ( );
+            serverSocket = new ServerSocket(this.port);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     /**
-     * See the initial configuration in server.config, where gets the initial number of client allow on the server
+     * <p>See the initial configuration in server.config, where gets the initial number of client allow on the server</p>
      *
      * @param fileName path to the server.config
      * @return inital number of clients that the server allow
@@ -66,6 +82,9 @@ public class ServerThread extends Thread {
         return Integer.parseInt(prop.getProperty("server.max_client"));
     }
 
+    /**
+     * <p>Increase the number of client each time that one client want to join</p>
+     */
     public void addClient(){
         this.controlClients.lock();
         try{
@@ -78,6 +97,9 @@ public class ServerThread extends Thread {
         }
     }
 
+    /**
+     * <p>Decrease the number of client each time that one client want to leave</p>
+     */
     public void removeClient(){
         this.controlClients.lock();
         try{
@@ -90,6 +112,11 @@ public class ServerThread extends Thread {
         }
     }
 
+    /**
+     * <p>Get the number of the client's in the waiting list</p>
+     *
+     * @return the size of the client's waiting list
+     */
     public int getCurrentClients(){
         return this.currentClients;
     }
@@ -99,7 +126,7 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * Allow to know if the server has space for more clients
+     * <p>Allow to know if the server has space for more clients</p>
      *
      * @return true, if it is possible to the client connect to the server
      * @throws InterruptedException Thrown when a thread is waiting, sleeping, or otherwise occupied, and the thread is interrupted, either before or during the activity.
@@ -109,8 +136,8 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * When a client want to disconnect, the server receives a notification. The purpose of this notification is release a space on the server to allow future clients.
-     * It's important to have a lock to verificated if two client try to disconnect or edit at the same time.
+     * <p>When a client want to disconnect, the server receives a notification. The purpose of this notification is release a space on the server to allow future clients.
+     * It's important to have a lock to verificated if two client try to disconnect or edit at the same time.</p>
      */
     public void disconnectClient(){
         this.changeMaxClienstlock.lock();
@@ -127,16 +154,9 @@ public class ServerThread extends Thread {
             changeMaxClienstlock.unlock();
         }
     }
-    /**
-     * Get the number of the client's in the waiting list
-     * @return the size of the client's waiting list
-     */
-    public int getSizeOfClients(){
-        return waitingList.size();
-    }
 
     /**
-     * Get the actual maximum number of the clients
+     * <p>Get the actual maximum number of the clients</p>
      * @return the actual maximum number of the clients
      */
     public int getMaxClients(){
@@ -144,7 +164,7 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * Set the new number of clients that the server allow, this number is inserted for one client
+     * <p>Set the new number of clients that the server allow, this number is inserted for one client</p>
      * @param newNum set the new number of clients that the server allow, this number is inserted for one client
      */
     public void setMaxClients(int newNum){
@@ -152,7 +172,7 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * Increase a space in the semaphore. This is calculated with the current number - the number inserted from the client
+     * <p>Increase a space in the semaphore. This is calculated with the current number - the number inserted from the client</p>
      * @param num set the new number of clients that the server allow, this number is inserted for one client
      */
     public void incrementSem(int num){
@@ -164,7 +184,7 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * Decrease a space in the semaphore
+     * <p>Decrease a space in the semaphore</p>
      * @param num number that decrease the current semaphore
      */
     public void decreaseSem(int num){
@@ -172,7 +192,7 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * Modify the actual number of the client that the server allow. This is calculated with the current number - the number inserted from the client
+     * <p>Modify the actual number of the client that the server allow. This is calculated with the current number - the number inserted from the client</p>
      * @param num number inserted from the client to change the actual number
      */
     protected void editMaxNumber(int num){
@@ -199,7 +219,7 @@ public class ServerThread extends Thread {
     }
 
     /**
-     * Verify if there are client on the waiting list. If there are, the function activate the client
+     * <p>Verify if there are client on the waiting list. If there are, the function activate the client</p>
      */
     private void nextClient(){
         this.nextClientLock.lock();
@@ -218,6 +238,95 @@ public class ServerThread extends Thread {
         finally {
             nextClientLock.unlock();
         }
+    }
+
+    /**
+     * <p>Add word to the filter, these words are writing by clients</p>
+     * @param word word given by the client to add to the filter
+     */
+    public void addWordToFilter(String word) {
+        this.controlFileAccess.lock();
+        try {
+            FileWriter fileWriter = new FileWriter("./filter.txt", true);
+            BufferedWriter writer = new BufferedWriter(fileWriter);
+
+            writer.newLine();
+            writer.write(word);
+
+            writer.close();
+            fileWriter.close();
+
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        finally {
+            controlFileAccess.unlock();
+        }
+    }
+
+    /**
+     * <p>Remove client's messages from the filter</p>
+     * @param word word given by the client to remove from the filter
+     */
+    public void removeWordFromFilter(String word) {
+        this.controlFileAccess.lock();
+        try {
+            Scanner sc = new Scanner(new File("./filter.txt"));
+            StringBuilder sb = new StringBuilder();
+            String first = sc.nextLine();
+
+            if (first != null){
+                sb.append(first);
+            }
+
+            while (sc.hasNextLine()) {
+                String input = sc.nextLine();
+                if (!input.strip().equalsIgnoreCase(word)){
+                    sb.append("\n").append(input);
+                }
+            }
+
+            PrintWriter writer = new PrintWriter("./filter.txt");
+            writer.append(sb.toString());
+            writer.flush();
+
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        finally {
+            controlFileAccess.unlock();
+        }
+    }
+
+    /**
+     * <p>Show words at currently in the filter</p>
+     */
+    public String showWords(){
+        StringBuilder words = new StringBuilder();
+        this.controlFileAccess.lock();
+        try {
+            int count = 1;
+
+            BufferedReader br = new BufferedReader(new FileReader("./filter.txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                words.append(line).append("   ");
+                if (count%5 == 0){
+                    words.append("\n");
+                }
+                count++;
+            }
+
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+        finally {
+            controlFileAccess.unlock();
+        }
+        return words.append("\n").append("FINISHED READING A FILE").toString();
     }
 
     public void run ( ){
@@ -253,7 +362,9 @@ public class ServerThread extends Thread {
 
 //http://www.cs.sjsu.edu/~pearce/modules/lectures/oop/templates/threads/index.htm
 
-
+/**
+ * <p>See the initial configuration in server.config, where gets the initial number of client allow on the server</p>
+ */
 class ClientHandler extends Thread {
     private BlockingQueue<String> buffer_unfilther;
     private BlockingQueue<String> buffer_filther;
@@ -262,6 +373,16 @@ class ClientHandler extends Thread {
     private Integer clientId;
     private ServerThread server;
 
+    /**
+     * <p>Class ClientHandler's Constructor</p>
+     *
+     * @param buffer_filther List of messages that have already passed from the filter
+     * @param buffer_unfilther List of messages that haven't passed from the filter
+     * @param clientSocket Port where the server can connect
+     * @param clientId Number of identification from each client
+     * @param server Sever where the clients are
+     *
+     */
     public ClientHandler(BlockingQueue<String> buffer_unfilther,BlockingQueue<String> buffer_filther,Socket clientSocket,Integer clientId, ServerThread server){
         this.buffer_unfilther = buffer_unfilther;
         this.buffer_filther = buffer_filther;
@@ -279,7 +400,7 @@ class ClientHandler extends Thread {
     }
 
     /**
-     * Server's response to each possible client's action
+     * <p>Server's response to each possible client's action</p>
      *
      * @param  in request from client to server
      * @param  out respond from server to client
@@ -326,6 +447,17 @@ class ClientHandler extends Thread {
                 //Print the censored message to stdout.
                 System.out.println(replaced);
             }
+            case "add" -> {
+                String received_word = in.readUTF();
+                server.addWordToFilter(received_word);
+            }
+            case "remove" -> {
+                String received_word = in.readUTF();
+                server.removeWordFromFilter(received_word);
+            }
+            case "show" -> {
+                out.println(server.showWords());
+            }
             default -> {}
         }
         return true;
@@ -340,13 +472,9 @@ class ClientHandler extends Thread {
 
             boolean run = true;
             while(run) {
-
                 run = serverResponse(in, out);
-
             }
         }
-        // Falta ver se o tipo de Exception é java.net.SocketException: Connection reset. Se for , acabar este client.
-        // Assim , já não é preciso do isConnected() no inicio do loop.
         catch (Exception e){
             System.out.println(e);
             logger.logNewMessage(LogType.DISCONNECTION, this.clientId, null);

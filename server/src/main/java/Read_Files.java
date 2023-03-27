@@ -1,17 +1,27 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * <p>Read the data from the files</p>
+ */
 public class Read_Files extends Thread {
     private String filename;
 
+    /**
+     * <p>class Read_Files's Constructor</p>
+     * @param filename path where the server are going to search the data
+     */
     public Read_Files(String filename ){
         this.filename=filename;
     }
 
+    /**
+     *<p>Read the data from the files</p>
+     * @return BlockingQueue
+     */
     public BlockingQueue<String> read_file(){
         BlockingQueue<String> words = new LinkedBlockingQueue<>();
         try {
@@ -29,6 +39,7 @@ public class Read_Files extends Thread {
         }
         return words;
     }
+
     @Override
     public void run() {
         while(true) {
