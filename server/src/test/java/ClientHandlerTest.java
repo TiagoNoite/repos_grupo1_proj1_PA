@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+ 
 class ClientHandlerTest {
     private ServerThread server;
     private Socket socket;
