@@ -28,7 +28,7 @@ class ServerThreadTest {
         this.server = new ServerThread ( 8888,Buffer_unfilther, Buffer_filtherd, Write_sem, filename);
     }
 
-    /*@Test
+    @Test
     void getMaxClientFromServer() {
         assertEquals(3, server.getMaxClientFromServer(filename));
     }
@@ -148,5 +148,5 @@ class ServerThreadTest {
 
         //Ask if the change is apply
         assertEquals(2, server.getMaxClients());
-    }*/
+    }
 }
