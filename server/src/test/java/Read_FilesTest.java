@@ -6,7 +6,7 @@ class Read_FilesTest {
     @Nested
     @DisplayName("construct the file reader")
     class reader {
-        private Read_Files readFiles = new Read_Files("./filter.txt");
+        private Read_Files readFiles = new Read_Files("C:\\Users\\pc\\Desktop\\universidade\\3_ano\\PA\\praticas\\repos_grupo1_proj1_PA-Final\\filter.txt");
 
         @Test
         void read_file() {
