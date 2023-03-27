@@ -7,7 +7,7 @@ class Read_FilesTest {
     @DisplayName("construct the file reader")
     class reader {
         private Read_Files reader =new Read_Files("./../filter.txt");
-        
+         
         @Test
         void read_file() {
             reader.read_file();
