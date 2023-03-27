@@ -42,3 +42,4 @@ jobs:
           path:
             client/target/site/jacoco/
             server/target/site/jacoco/
+
