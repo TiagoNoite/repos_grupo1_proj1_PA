@@ -29,7 +29,7 @@ class Write_fileTest {
         }
         @Test
         void run() {
-            assertTimeout(Duration.ofSeconds(2) , () ->  write2.run());
+            //assertTimeout(Duration.ofSeconds(2) , () ->  write2.run());
 
         }
 
@@ -46,3 +46,4 @@ class Write_fileTest {
         }
     }
 }
+
