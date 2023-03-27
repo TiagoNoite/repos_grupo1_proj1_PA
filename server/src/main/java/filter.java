@@ -1,13 +1,24 @@
-import java.io.PrintWriter;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 
+/**
+ * <p>Class Filter to filter the messages and data for each client that send to the server</p>
+ *
+ */
 public class filter extends Thread{
      private BlockingQueue<String>  filtro;
     BlockingQueue<String>  Buffer_unfilther;
     BlockingQueue<String>  Buffer_filther ;
     Semaphore Write_sem;
 
+    /**
+     * <p>Class Filter's Constructor</p>
+     *
+     * @param Buffer_filtherd List of messages that have already passed from the filter
+     * @param Buffer_unfilther List of messages that haven't passed from the filter
+     * @param Write_sem control
+     *
+     */
     public filter(BlockingQueue<String>  Buffer_unfilther, BlockingQueue<String> Buffer_filtherd, Semaphore Write_sem){
         this.Buffer_unfilther=Buffer_unfilther;
         this.Buffer_filther=Buffer_filtherd;
@@ -18,7 +29,8 @@ public class filter extends Thread{
         filtro = readFiles.read_file();
     }
 
-    public void replace_funcion(){// falta adicionar a parte de ler as palavras que sao pa filtrar
+
+    public void replace_funcion(){
 
         while(!Buffer_unfilther.isEmpty()) {
             String word = Buffer_unfilther.poll();

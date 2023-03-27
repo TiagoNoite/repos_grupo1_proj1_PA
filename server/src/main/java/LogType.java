@@ -1,4 +1,4 @@
-public enum LogType{
+enum LogType{
     CONNECTION,
     DISCONNECTION,
     WAITING,

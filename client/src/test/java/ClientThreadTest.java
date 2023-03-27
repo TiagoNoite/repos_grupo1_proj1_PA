@@ -67,7 +67,7 @@ class ClientThreadTest {
 
         @Test
         void addToFilther() {
-            assertTimeout(Duration.ofSeconds(2), () -> client.addToFilther());
+            assertTimeout(Duration.ofSeconds(2), () -> client.addToFilter());
         }
 
         @Test
