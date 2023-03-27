@@ -31,17 +31,18 @@ class filterTest {
             BufferUnfilterd.add("aaaaa");
             this.filther= new filter(BufferUnfilterd, BufferFilterd, Write_sem);
         }
-
-               @Test
+        @Test
         void replace_funcion(){
             assertTimeout(Duration.ofSeconds(1) , () ->  filther.replace_funcion());
         }
-
+        @Test
+        void pre_run(){
+            assertTimeout(Duration.ofSeconds(1) , () ->  filther.pre_run());
+        }
 
         @Test
         void run() {
            // assertTimeout(Duration.ofSeconds(1) , () ->  filther.run());
         }
-    }
     }
 }
